@@ -42,16 +42,16 @@ func! Handler(channel, msg)
     echo a:msg["method"]
 endfunc
 
-function! Send_request(method, params)
+function! Send_request(method, params, handler)
   let g:id += 1
   let _request = {"jsonrpc":"2.0", "id":g:id, "method":a:method, "params":a:params}
-  call ch_sendexpr(g:channel, _request, {'callback': 'Handler'})
+  call ch_sendexpr(g:channel, _request, {'callback': a:handler})
 endfunction
 
 function! Goto_definition()
   let _method = "textDocument/definition"
   let _params = TextDocumentPositionParams()
-  call Send_request(_method, _params)
+  call Send_request(_method, _params, "Handler")
 endfunction
 
 
