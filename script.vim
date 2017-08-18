@@ -2,11 +2,14 @@
 " TODO retrieve the project definition file
 " TODO if not exist abort
 
-let g:id = 0
+if !exists("g:id")
+    let g:id = 0
+endif
+
 function! Open_channel()
-  if ch_status(g:channel) == "closed"
+  if !exists("g:channel") || ch_status(g:channel) == "closed"
     " open a channel
-    let g:channel = ch_open('localhost:8765')
+    let g:channel = ch_open('localhost:8888')
   endif
   echo ch_status(g:channel)
 endfunction
@@ -35,17 +38,20 @@ function! TextDocumentPositionParams()
   return {"textDocument": _textDocument, "position":_position}
 endfunction
 
+func! Handler(channel, msg)
+    echo a:msg["method"]
+endfunc
+
 function! Send_request(method, params)
   let g:id += 1
   let _request = {"jsonrpc":"2.0", "id":g:id, "method":a:method, "params":a:params}
-  echo ch_evalexpr(g:channel, _request)
+  call ch_sendexpr(g:channel, _request, {'callback': 'Handler'})
 endfunction
 
 function! Goto_definition()
   let _method = "textDocument/definition"
   let _params = TextDocumentPositionParams()
   call Send_request(_method, _params)
-  let _request = {"method":_method, "params":_params}
 endfunction
 
 
