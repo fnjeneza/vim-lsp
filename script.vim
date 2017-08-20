@@ -48,10 +48,35 @@ function! Send_request(method, params, handler)
   call ch_sendexpr(g:channel, _request, {'callback': a:handler})
 endfunction
 
+function! Get_command()
+  " compile commands
+  " TODO must be defined
+  let g:compile_commands = ""
+  " filename
+  let file = expand("%:p")
+  let pos = getcurpos()
+  " current row
+  let row = pos[1]
+  " current column
+  let col = pos[2]
+  let cmd = "icscope --cc ".g:compile_commands." -f ".file." -l ".row." -o ".col
+  return cmd
+endfunction
+
 function! Goto_definition()
   let _method = "textDocument/definition"
   let _params = TextDocumentPositionParams()
-  call Send_request(_method, _params, "Handler")
+"  call Send_request(_method, _params, "Handler")
+"  TODO remove. just for test
+  let cmd = Get_command()." -g"
+  echo cmd
+  return
+  let output = json_decode(system(cmd))
+  let filename = output["file"]
+  silent! execute "tabedit ".filename
+  let row = output["line"]
+  let col = output["col"]
+  call setpos('.', [0, row, col, 0])
 endfunction
 
 
@@ -59,5 +84,4 @@ endfunction
 "py3f vim_lsp.py
 
 call Open_channel()
-"command! GotoDefinition python3 goto_definition()
 command! GotoDefinition call Goto_definition()
