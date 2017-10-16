@@ -1,11 +1,19 @@
 " TODO retrieve the filetype
 " TODO retrieve the project definition file
 " TODO if not exist abort
+python3 << EOF
+import vim
+import os
+import sys
+# script directory
+current_directory = vim.eval("expand( '<sfile>:p:h' )")
+# additional search path for modules
+sys.path.append(current_directory)
+id = 0
 
-let g:channel = ch_open('localhost:3338')
-echo ch_status(channel)
-if ch_status(channel) == "open"
-endif
+EOF
+
+
 " if !exists("g:id")
 "     let g:id = 0
 " endif
