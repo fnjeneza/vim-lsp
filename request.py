@@ -8,13 +8,22 @@ class Client(object):
 
     def __init__(self):
         self.id = 0 # request ID
+        self.project_conf()
         self.connect()
         self.initialize()
+
+    def project_conf(self):
+        vim_project = os.path.join(os.getcwd(), "vim_project.conf")
+        with open(vim_project) as project:
+            conf = json.loads(project.read())
+            self.address = conf["address"]
+            self.port = int(conf["port"])
+            self.config = conf["config"]
 
     def connect(self):
         try:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.sock.connect(("localhost", 3338))
+            self.sock.connect((self.address, self.port))
         except ConnectionRefusedError:
             print("Connection Refused, no server available")
 
@@ -38,16 +47,16 @@ class Client(object):
 
     def initialize(self):
         rootUri = os.path.join("/tmp/cpp-lsp/flatbuffers", "build")
-        options = os.path.join(os.getcwd(), "config.json")
+        options = self.config
         if not os.path.exists(rootUri) or not os.path.exists(options):
-            print("one or both necessary files does not exist")
+            print("one or both necessary files do not exist")
             print(rootUri)
             print(options)
             return
 
         params = {"processId": os.getpid(), "rootUri": rootUri,
                 "initializationOptions": options, "capabilities":"", "trace":"off"}
-        self.send("initialize", params)
+            self.send("initialize", params)
 
     def textDocument_definition(self):
         print("hello")
