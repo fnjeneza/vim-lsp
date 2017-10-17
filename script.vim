@@ -9,9 +9,18 @@ import sys
 current_directory = vim.eval("expand( '<sfile>:p:h' )")
 # additional search path for modules
 sys.path.append(current_directory)
-id = 0
 
+from request import Client
+client = Client()
 EOF
+
+function! Initialize()
+    py3 client.initialize()
+endfunction
+
+function! Goto_definition()
+    py3 client.textDocument_definition()
+endfunction
 
 
 " if !exists("g:id")
