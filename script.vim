@@ -10,8 +10,8 @@ current_directory = vim.eval("expand( '<sfile>:p:h' )")
 # additional search path for modules
 sys.path.append(current_directory)
 
-from request import Client
-client = Client()
+from lsp import IDE_LSPClient
+client = IDE_LSPClient()
 EOF
 
 function! Initialize()
@@ -22,6 +22,9 @@ function! Goto_definition()
     py3 client.textDocument_definition()
 endfunction
 
+function! Goto_reference()
+    py3 client.textDocument_reference()
+endfunction
 
 " if !exists("g:id")
 "     let g:id = 0

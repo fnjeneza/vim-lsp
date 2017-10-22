@@ -17,7 +17,8 @@ class Client(object):
         with open(vim_project) as project:
             conf = json.loads(project.read())
             self.address = conf["address"]
-            self.port = int(conf["port"])
+            self.port = conf["port"]
+            self.rootUri = conf["rootUri"]
             self.config = conf["config"]
 
     def connect(self):
@@ -36,6 +37,7 @@ class Client(object):
         request_message = json.dumps(request_message)
         data = "Content-Length: {}\r\n\r\n{}".format(len(request_message),
                 request_message)
+        print(data)
         try:
             self.sock.sendall(bytes(data, "utf-8"))
             resp = self.sock.recv(1024)
@@ -46,7 +48,7 @@ class Client(object):
         self.id += 1
 
     def initialize(self):
-        rootUri = os.path.join("/tmp/cpp-lsp/flatbuffers", "build")
+        rootUri = self.rootUri
         options = self.config
         if not os.path.exists(rootUri) or not os.path.exists(options):
             print("one or both necessary files do not exist")
@@ -56,7 +58,7 @@ class Client(object):
 
         params = {"processId": os.getpid(), "rootUri": rootUri,
                 "initializationOptions": options, "capabilities":"", "trace":"off"}
-            self.send("initialize", params)
+        self.send("initialize", params)
 
     def textDocument_definition(self):
         print("hello")
