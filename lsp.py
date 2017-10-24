@@ -65,11 +65,14 @@ def goto(uri, line, character):
 def handler(data):
     if not data: return
 
-    message = json.loads(data)
-    uri = message["uri"]
-    line = message["range"]["start"]["line"]
-    character = message["range"]["start"]["character"]
-    goto(uri, line, character)
+    try:
+        message = json.loads(data)
+        uri = message["uri"]
+        line = message["range"]["start"]["line"]
+        character = message["range"]["start"]["character"]
+        goto(uri, line, character)
+    except json.decoder.JSONDecodeError as e:
+        print(data)
 
 class LSPClient():
     def __init__(self, address="localhost", port=3338):
