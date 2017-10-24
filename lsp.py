@@ -16,7 +16,7 @@ class IDE_LSPClient:
 
     def initialize(self):
         method = "initialize"
-        rootUri = vim.eval("expand('%:p')")
+        rootUri = os.getcwd()
         options = os.path.join(os.getcwd(), "config.json")
 
         params = {"processId": os.getpid(), "rootUri": rootUri, "initializationOptions":
