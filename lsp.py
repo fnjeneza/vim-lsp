@@ -103,10 +103,13 @@ class LSPClient():
         return request
 
     def send(self, method, params):
-        self.coro = self.connect()
-        next(self.coro)
-        message = self.build_request(method, params)
-        self.coro.send(message)
+        try:
+            self.coro = self.connect()
+            next(self.coro)
+            message = self.build_request(method, params)
+            self.coro.send(message)
+        except ConnectionRefusedError:
+            print("Connection refused error")
 
 if __name__ == "__main__":
     ide = IDE_LSPClient()

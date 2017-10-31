@@ -1,6 +1,7 @@
 " TODO retrieve the filetype
 " TODO retrieve the project definition file
 " TODO if not exist abort
+
 python3 << EOF
 import vim
 import os
@@ -11,10 +12,11 @@ current_directory = vim.eval("expand( '<sfile>:p:h' )")
 sys.path.append(current_directory)
 
 from lsp import IDE_LSPClient
-client = IDE_LSPClient()
+client = None
 EOF
 
 function! Initialize()
+    py3 client = IDE_LSPClient()
     py3 client.initialize()
 endfunction
 
