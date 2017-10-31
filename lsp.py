@@ -8,7 +8,8 @@ class IDE_LSPClient:
         self.lsp_client = LSPClient()
 
     def DocumentUri(self):
-        return vim.eval("expand('%:p')")
+        path = vim.eval("expand('%:p')")
+        return path
 
     def Position(self):
         (line, character) = vim.current.window.cursor
@@ -53,8 +54,8 @@ def file_buffer(filename):
 
 def goto(uri, line, character):
     if not uri: return
-    current_document = vim.eval("expand('%:p')")
-    if os.path.abspath(current_document) != os.path.abspath(uri):
+    current_document = vim.eval("expand('%h')")
+    if not os.path.samefile(current_document,uri):
         idx = file_buffer(uri)
         if idx:
             vim.command(":tabnext {}".format(idx.number))
@@ -72,6 +73,7 @@ def handler(data):
         character = message["range"]["start"]["character"]
         goto(uri, line, character)
     except json.decoder.JSONDecodeError as e:
+        print("json decoding error")
         print(data)
 
 class LSPClient():
@@ -86,7 +88,7 @@ class LSPClient():
             sock.connect((self.address, self.port))
             while True:
                 message = yield self.message
-                print(message)
+                # print(message)
                 sock.sendall(bytes(message, "utf-8"));
                 data = sock.recv(1024)
                 handler(data.decode("utf8"))
