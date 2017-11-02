@@ -25,7 +25,7 @@ function! Goto_definition()
 endfunction
 
 function! Goto_reference()
-    py3 client.textDocument_reference()
+    py3 client.textDocument_references()
 endfunction
 
 " if !exists("g:id")
