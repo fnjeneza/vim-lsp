@@ -59,7 +59,7 @@ def goto(uri, line, character):
         idx = file_buffer(uri)
         if idx:
             vim.command(":tabnext {}".format(idx.number))
-        else: vim.command(":tabedit {}".format(uri))
+        else: vim.command(":edit {}".format(uri))
     vim.current.window.cursor = (line, character-1)
 
 
