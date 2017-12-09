@@ -56,10 +56,11 @@ def goto(uri, line, character):
     if not uri: return
     current_document = vim.eval("expand('%h')")
     if not os.path.samefile(current_document,uri):
-        idx = file_buffer(uri)
-        if idx:
-            vim.command(":tabnext {}".format(idx.number))
-        else: vim.command(":edit {}".format(uri))
+        vim.command(":edit {}".format(uri))
+        # idx = file_buffer(uri)
+        # if idx:
+        #     vim.command(":tabnext {}".format(idx.number))
+        # else: vim.command(":edit {}".format(uri))
     vim.current.window.cursor = (line, character-1)
 
 
