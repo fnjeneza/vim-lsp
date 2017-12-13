@@ -9,6 +9,7 @@ class IDE_LSPClient:
 
     def DocumentUri(self):
         path = vim.eval("expand('%:p')")
+        path = path.replace("home_raid1", "home")
         return path
 
     def Position(self):
@@ -62,16 +63,36 @@ def goto(uri, line, character):
         else: vim.command(":edit {}".format(uri))
     vim.current.window.cursor = (line, character-1)
 
+def message_error(message):
+    try:
+        error = message["error"]
+        if error is not None or len(error) == 0:
+            return True
+        return False
+    except :
+        pass
 
-def handler(data):
+def handler(data, method):
     if not data: return
 
     try:
         message = json.loads(data)
-        uri = message["uri"]
-        line = message["range"]["start"]["line"]
-        character = message["range"]["start"]["character"]
-        goto(uri, line, character)
+        id = message["id"]
+
+        if message_error(message):
+            err = message["error"]
+            print("{}:{}".format(error["code"], error["message"]))
+        else:
+            if method == "initialize":
+                message = message["result"]
+                # TODO initialize server parameter
+                return
+
+            uri = message["uri"]
+            line = message["range"]["start"]["line"]
+            character = message["range"]["start"]["character"]
+            goto(uri, line, character)
+
     except json.decoder.JSONDecodeError as e:
         print("json decoding error")
         print(data)
@@ -82,6 +103,7 @@ class LSPClient():
         self.message = None
         self.address = address
         self.port = port
+        self.method_request_sent = {}
 
     def connect(self):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
@@ -90,8 +112,9 @@ class LSPClient():
                 message = yield self.message
                 # print(message)
                 sock.sendall(bytes(message, "utf-8"));
+                self.method_request_sent[self.id] = self._method
                 data = sock.recv(1024)
-                handler(data.decode("utf8"))
+                handler(data.decode("utf8"), self.method_request_sent[self.id])
                 self.id = self.id+1
 
     def build_request(self, method, params):
@@ -107,6 +130,7 @@ class LSPClient():
             self.coro = self.connect()
             next(self.coro)
             message = self.build_request(method, params)
+            self._method = method
             self.coro.send(message)
         except ConnectionRefusedError:
             print("Connection refused error")
