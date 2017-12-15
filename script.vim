@@ -28,6 +28,13 @@ function! Goto_reference()
     py3 client.textDocument_references()
 endfunction
 
+function! Document_didOpen()
+    py3 if client is not None: client.textDocument_didOpen()
+endfunction
+
+
+autocmd BufRead * call Document_didOpen()
+
 " if !exists("g:id")
 "     let g:id = 0
 " endif

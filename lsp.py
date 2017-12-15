@@ -45,6 +45,14 @@ class IDE_LSPClient:
         params = {"textDocument": textDocumentIdentifier, "position": position}
         self.lsp_client.send(method, params)
 
+    def textDocument_didOpen(self):
+        method = "textDocument/didOpen"
+        uri = self.DocumentUri()
+        textDocumentItem = {"uri": uri, "languageId": "", "version": 0,
+                "text": ""}
+        params = {"textDocument": textDocumentItem}
+        self.lsp_client.send(method, params)
+
 
 def file_buffer(filename):
     # lookup in the buffer
@@ -86,6 +94,8 @@ def handler(data, method):
             if method == "initialize":
                 message = message["result"]
                 # TODO initialize server parameter
+                return
+            if method == "textDocument/didOpen":
                 return
 
             uri = message["uri"]
