@@ -1,7 +1,8 @@
+" ########################################
 " TODO retrieve the filetype
 " TODO retrieve the project definition file
 " TODO if not exist abort
-
+"
 python3 << EOF
 import vim
 import os
@@ -12,21 +13,37 @@ current_directory = vim.eval("expand( '<sfile>:p:h' )")
 sys.path.append(current_directory)
 
 from lsp import IDE_LSPClient
+import lsp
 client = None
 EOF
 
+let g:channel=ch_open('localhost:3338', {'mode':'raw'})
+let id=1
+
+function! Handle_response_async(channel, msg)
+    " echo "from the handler ".a:msg
+    echo "log from the handler"
+endfunction
+
+function! Handle_response(msg)
+    let ret = py3eval("lsp.handle_response('".a:msg."')")
+endfunction
+
 function! Initialize()
-    py3 client = IDE_LSPClient()
-    py3 client.initialize()
+    let arg=py3eval("lsp.initialize()")
+    " asynchornous
+    " call ch_sendraw(g:channel, arg, {'callback':"Response_handler"})
+    let response = ch_evalraw(g:channel, arg)
+    call Handle_response(response)
 endfunction
 
-function! Goto_definition()
-    py3 client.textDocument_definition()
+function! Definition()
+    let value=py3eval("lsp.textDocument_definition()")
+    let response = ch_evalraw(g:channel, value)
+    call Handle_response(response)
 endfunction
 
-function! Goto_reference()
-    py3 client.textDocument_references()
-endfunction
+call Initialize()
 
 " if !exists("g:id")
 "     let g:id = 0

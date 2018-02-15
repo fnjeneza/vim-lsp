@@ -5,7 +5,8 @@ import vim
 
 class IDE_LSPClient:
     def __init__(self):
-        self.lsp_client = LSPClient()
+        # self.lsp_client = LSPClient()
+        pass
 
     def DocumentUri(self):
         path = vim.eval("expand('%:p')")
@@ -22,7 +23,8 @@ class IDE_LSPClient:
 
         params = {"processId": os.getpid(), "rootUri": rootUri, "initializationOptions":
                 options, "capabilities": "", "trace": "off"}
-        self.lsp_client.send(method, params)
+        # self.lsp_client.send(method, params)
+        send(request(method, params))
 
     def textDocument_references(self):
         method = "textDocument/references"
@@ -44,6 +46,48 @@ class IDE_LSPClient:
         params = {"textDocument": textDocumentIdentifier, "position": position}
         self.lsp_client.send(method, params)
 
+def DocumentUri():
+    path = vim.eval("expand('%:p')")
+    return path
+
+def Position():
+    (line, character) = vim.current.window.cursor
+    return {"line":line,"character":character+1}
+
+def initialize():
+    method = "initialize"
+    rootUri = os.getcwd()
+    options = os.path.join(os.getcwd(), "config.json")
+
+    params = {"processId": os.getpid(), "rootUri": rootUri, "initializationOptions":
+            options, "capabilities": "", "trace": "off"}
+    return request(method, params)
+
+def textDocument_definition():
+    method = "textDocument/definition"
+    uri = DocumentUri()
+
+    position = Position()
+    textDocumentIdentifier = {"uri": uri}
+    params = {"textDocument": textDocumentIdentifier, "position": position}
+    return request(method, params)
+
+def handle_response(response):
+    print(response)
+    return True
+
+
+def request(method, params):
+    request = {"jsonrpc":"2.0", "id":1, "method":method, "params":params}
+    # convert to json
+    request = json.dumps(request)
+    # add header part
+    request = "Content-Length: {}\r\n\r\n{}".format(len(request), request)
+    return request
+
+def send(req):
+    vim.command("""call ch_sendraw(channel, '{}',
+            {'callback':'Response_handler'})""".format(req))
 
 def file_buffer(filename):
     # lookup in the buffer
@@ -62,7 +106,6 @@ def goto(uri, line, character):
         #     vim.command(":tabnext {}".format(idx.number))
         # else: vim.command(":edit {}".format(uri))
     vim.current.window.cursor = (line, character-1)
-
 
 def handler(data):
     if not data: return
