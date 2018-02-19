@@ -43,6 +43,13 @@ function! Definition()
     call Handle_response(response, "definition")
 endfunction
 
+function! References()
+    let value=py3eval("lsp.textDocument_references()")
+    let response = ch_evalraw(g:channel, value)
+    echo response
+    call Handle_response(response, "references")
+endfunction
+
 call Initialize()
 
 " if !exists("g:id")

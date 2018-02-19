@@ -72,6 +72,17 @@ def textDocument_definition():
     params = {"textDocument": textDocumentIdentifier, "position": position}
     return request(method, params)
 
+def textDocument_references():
+    method = "textDocument/references"
+    uri = DocumentUri()
+
+    position = Position()
+    textDocumentIdentifier = {"uri": uri}
+    context = {"includeDeclaration": True}
+    params = {"textDocument": textDocumentIdentifier, "position": position,
+            "context": context}
+    return request(method, params)
+
 def handle_response(response, method):
     if method == "initialize":
         return True
