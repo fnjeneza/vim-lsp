@@ -25,8 +25,8 @@ function! Handle_response_async(channel, msg)
     echo "log from the handler"
 endfunction
 
-function! Handle_response(msg)
-    let ret = py3eval("lsp.handle_response('".a:msg."')")
+function! Handle_response(msg, method)
+    let ret = py3eval("lsp.handle_response('".a:msg."','".a:method."')")
 endfunction
 
 function! Initialize()
@@ -34,13 +34,13 @@ function! Initialize()
     " asynchornous
     " call ch_sendraw(g:channel, arg, {'callback':"Response_handler"})
     let response = ch_evalraw(g:channel, arg)
-    call Handle_response(response)
+    call Handle_response(response, "initialize")
 endfunction
 
 function! Definition()
     let value=py3eval("lsp.textDocument_definition()")
     let response = ch_evalraw(g:channel, value)
-    call Handle_response(response)
+    call Handle_response(response, "definition")
 endfunction
 
 call Initialize()

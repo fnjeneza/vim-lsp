@@ -72,10 +72,21 @@ def textDocument_definition():
     params = {"textDocument": textDocumentIdentifier, "position": position}
     return request(method, params)
 
-def handle_response(response):
-    print(response)
+def handle_response(response, method):
+    if method == "initialize":
+        return True
+    else:
+        try:
+            message = json.loads(response)
+            uri = message["uri"]
+            line = message["range"]["start"]["line"]
+            character = message["range"]["start"]["character"]
+            goto(uri, line, character)
+        except json.decoder.JSONDecodeError as e:
+            print("json decoding error")
+            print(response)
+            return False
     return True
-
 
 def request(method, params):
     request = {"jsonrpc":"2.0", "id":1, "method":method, "params":params}
