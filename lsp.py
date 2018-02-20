@@ -89,9 +89,25 @@ def handle_response(response, method):
     else:
         try:
             message = json.loads(response)
-            uri = message["uri"]
-            line = message["range"]["start"]["line"]
-            character = message["range"]["start"]["character"]
+            result = message["result"]
+            if len(result) == 0:
+                return True
+            files=[]
+            index = 1
+            for res in result:
+                uri = res["uri"]
+                line = res["range"]["start"]["line"]
+                character = res["range"]["start"]["character"]
+                files.append("{}  : {}:{}".format(index, uri, line))
+                index = index+1
+            source = "'source':{}".format(files)
+            command = "fzf#run({%s})" %source
+            value = vim.eval(command)[0]
+            index = int(value.split(':')[0])
+            res = result[index-1]
+            uri = res["uri"]
+            line = res["range"]["start"]["line"]
+            character = res["range"]["start"]["character"]
             goto(uri, line, character)
         except json.decoder.JSONDecodeError as e:
             print("json decoding error")
@@ -134,7 +150,7 @@ def handler(data):
 
     try:
         message = json.loads(data)
-        uri = message["uri"]
+        uri = result["uri"]
         line = message["range"]["start"]["line"]
         character = message["range"]["start"]["character"]
         goto(uri, line, character)

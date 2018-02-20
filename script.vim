@@ -27,6 +27,9 @@ endfunction
 
 function! Handle_response(msg, method)
     let ret = py3eval("lsp.handle_response('".a:msg."','".a:method."')")
+    " py should return a list
+    " if list size ==1 goto file else fzf print files
+    " let file_to_open = fzf#run({'source':["file1","file2"]})
 endfunction
 
 function! Initialize()
@@ -46,7 +49,6 @@ endfunction
 function! References()
     let value=py3eval("lsp.textDocument_references()")
     let response = ch_evalraw(g:channel, value)
-    echo response
     call Handle_response(response, "references")
 endfunction
 
