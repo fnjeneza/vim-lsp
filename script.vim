@@ -52,6 +52,49 @@ function! References()
     call Handle_response(response, "references")
 endfunction
 
+function! File()
+    let value=py3eval("lsp.textDocument_file()")
+    let response = ch_evalraw(g:channel, value)
+    call Handle_response(response, "file")
+endfunction
+
+function! Switch_header_source()
+    let value=py3eval("lsp.textDocument_switch_header_source()")
+    let response = ch_evalraw(g:channel, value)
+    call Handle_response(response, "switch_header_source")
+endfunction
+
+let g:dico=[{'word':"helloWorld", 'menu':"simple word", 'info':"This is how engish people say hello", 'kind':"v", 'dup':1}, {'word':"helloWorlD", 'info':""}]
+function! Complete_cpp(findstart, base)
+    if a:findstart
+        "locate the start of the word"
+        let line = getline('.')
+        let start = col('.') - 1
+        while start > 0 && line[start - 1] =~ '\a'
+            let start -= 1
+        endwhile
+        return start
+    else
+        "find match with a:base"
+        for m in split("hello Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec")
+            if m =~ '^' . a:base
+                for el in g:dico
+                    call complete_add(el)
+                endfor
+            endif
+            if complete_check()
+                break
+            endif
+        endfor
+        return []
+    endif
+endfunction
+
+" use CTRL-X CTRL-U to trigger the completion
+" set completefunc=Complete_cpp
+" use CTRL-X CTRL-O to trigger the completion
+set omnifunc=Complete_cpp
+
 call Initialize()
 
 " if !exists("g:id")

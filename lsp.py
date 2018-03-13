@@ -83,11 +83,28 @@ def textDocument_references():
             "context": context}
     return request(method, params)
 
+def textDocumentItem(method):
+    uri = DocumentUri()
+    position = Position()
+    textDocumentIdentifier = {"uri": uri}
+    params = {"textDocument": textDocumentIdentifier, "position": position}
+    return request(method, params)
+
+
+def textDocument_file():
+    method = "textDocument/file"
+    return textDocumentItem(method)
+
+def textDocument_switch_header_source():
+    method = "textDocument/switch_header_source"
+    return textDocumentItem(method)
+
 def handle_response(response, method):
     if method == "initialize":
         return True
     else:
         try:
+            print(response)
             message = json.loads(response)
             result = message["result"]
             if len(result) == 0:
