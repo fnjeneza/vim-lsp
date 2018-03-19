@@ -95,8 +95,6 @@ endfunction
 " use CTRL-X CTRL-O to trigger the completion
 set omnifunc=Complete_cpp
 
-call Initialize()
-
 " if !exists("g:id")
 "     let g:id = 0
 " endif
