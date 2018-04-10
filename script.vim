@@ -17,19 +17,21 @@ import lsp
 client = None
 EOF
 
+let g:completion_items=[]
 let g:channel=ch_open('localhost:3338', {'mode':'raw'})
 let id=1
-
-function! Handle_response_async(channel, msg)
-    " echo "from the handler ".a:msg
-    echo "log from the handler"
-endfunction
 
 function! Handle_response(msg, method)
     let ret = py3eval("lsp.handle_response('".a:msg."','".a:method."')")
     " py should return a list
     " if list size ==1 goto file else fzf print files
     " let file_to_open = fzf#run({'source':["file1","file2"]})
+endfunction
+
+function! Handle_response_async(channel, msg)
+    let g:completion_items = py3eval("lsp.handle_response('".a:msg."','completion')")
+    " simulate key stroke in insert mode
+    call feedkeys("i\<C-x>\<C-o>", 'n')
 endfunction
 
 function! Initialize()
@@ -64,7 +66,11 @@ function! Switch_header_source()
     call Handle_response(response, "switch_header_source")
 endfunction
 
-let g:dico=[{'word':"helloWorld", 'menu':"simple word", 'info':"This is how engish people say hello", 'kind':"v", 'dup':1}, {'word':"helloWorlD", 'info':""}]
+function! Completion()
+    let value=py3eval("lsp.textDocument_completion()")
+    call ch_sendraw(g:channel, value, {'callback':"Handle_response_async"})
+endfunction
+
 function! Complete_cpp(findstart, base)
     if a:findstart
         "locate the start of the word"
@@ -75,13 +81,10 @@ function! Complete_cpp(findstart, base)
         endwhile
         return start
     else
-        "find match with a:base"
-        for m in split("hello Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec")
-            if m =~ '^' . a:base
-                for el in g:dico
-                    call complete_add(el)
-                endfor
-            endif
+        " call Completion()
+        for item in g:completion_items
+            call complete_add(item)
+
             if complete_check()
                 break
             endif

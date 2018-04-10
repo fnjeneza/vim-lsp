@@ -84,6 +84,16 @@ def textDocument_references():
             "context": context}
     return request(method, params)
 
+def textDocument_completion():
+    method = "textDocument/completion"
+    uri = DocumentUri()
+
+    position = Position()
+    textDocumentIdentifier = {"uri": uri}
+    params = {"textDocument": textDocumentIdentifier, "position": position,
+            "context": ""}
+    return request(method, params)
+
 def textDocumentItem(method):
     uri = DocumentUri()
     position = Position()
@@ -100,12 +110,29 @@ def textDocument_switch_header_source():
     method = "textDocument/switch_header_source"
     return textDocumentItem(method)
 
+def completion_items(completion_items):
+    items =[]
+    for completion_item in completion_items:
+        word = completion_item["label"]
+        items.append({"word": word})
+    return items
+
 def handle_response(response, method):
     if method == "initialize":
         return True
+    elif method == "completion":
+        try:
+            message = json.loads(response)
+            result = message["result"]
+            if len(result) == 0:
+                return True
+            return completion_items(result)
+        except json.decoder.JSONDecodeError as e:
+            print("json decoding error")
+            print(response)
+            return False
     else:
         try:
-            print(response)
             message = json.loads(response)
             result = message["result"]
             if len(result) == 0:
@@ -195,7 +222,6 @@ def handler(data, method):
             character = message["range"]["start"]["character"]
             goto(uri, line, character)
 
->>>>>>> 823d7b438e75c0ef9f7feb7564773491259d8bb7
     except json.decoder.JSONDecodeError as e:
         print("json decoding error")
         print(data)
