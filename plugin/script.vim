@@ -6,6 +6,11 @@ if exists("g:loaded_langserver")
     finish
 endif
 let g:loaded_langserver=1
+"cpp langserver
+let g:cpp_langserver='localhost:3338'
+let g:completion_items=[]
+let id=1
+
 
 python3 << EOF
 import vim
@@ -21,9 +26,23 @@ import lsp
 client = None
 EOF
 
-let g:completion_items=[]
-let g:channel=ch_open('localhost:3338', {'mode':'raw'})
-let id=1
+function s:Connect()
+    " connect to the server
+    let g:channel=ch_open(g:cpp_langserver, {'mode':'raw'})
+endfunction
+
+" Check that the channel is connected to a server
+function! Connected()
+    return ch_status(g:channel) == "open"
+endfunction
+
+function! Reconnect()
+    if ch_status(g:channel) != "open"
+        call s:Connect()
+    else
+        echo "Channel alreay connected to server"
+    endif
+endfunction
 
 function! Handle_response(msg, method)
     let ret = py3eval("lsp.handle_response('".a:msg."','".a:method."')")
@@ -101,5 +120,9 @@ endfunction
 " set completefunc=Complete_cpp
 " use CTRL-X CTRL-O to trigger the completion
 set omnifunc=Complete_cpp
+
+" connect when entering the script
+call s:Connect()
+
 
 let &cpo = s:save_cpo
