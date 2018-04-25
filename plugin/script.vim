@@ -1,11 +1,11 @@
-" ########################################
-" TODO retrieve the filetype
-" TODO retrieve the project definition file
-" TODO if not exist abort
-"
 
 let s:save_cpo=&cpo
 set cpo&vim
+
+if exists("g:loaded_langserver")
+    finish
+endif
+let g:loaded_langserver=1
 
 python3 << EOF
 import vim
