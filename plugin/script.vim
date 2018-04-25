@@ -3,6 +3,10 @@
 " TODO retrieve the project definition file
 " TODO if not exist abort
 "
+
+let s:save_cpo=&cpo
+set cpo&vim
+
 python3 << EOF
 import vim
 import os
@@ -97,3 +101,5 @@ endfunction
 " set completefunc=Complete_cpp
 " use CTRL-X CTRL-O to trigger the completion
 set omnifunc=Complete_cpp
+
+let &cpo = s:save_cpo
