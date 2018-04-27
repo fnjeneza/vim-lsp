@@ -38,7 +38,7 @@ function! s:Connected()
     return ch_status(s:channel) == "open"
 endfunction
 
-function! Reconnect()
+function s:Reconnect()
     if ch_status(s:channel) != "open"
         call s:Connect()
         call s:Initialize()
@@ -73,31 +73,31 @@ function! s:Initialize()
     let s:initialized=1
 endfunction
 
-function! Definition()
+function s:Definition()
     let value=py3eval("lsp.textDocument_definition()")
     let response = ch_evalraw(s:channel, value)
     call Handle_response(response, "definition")
 endfunction
 
-function! References()
+function s:References()
     let value=py3eval("lsp.textDocument_references()")
     let response = ch_evalraw(s:channel, value)
     call Handle_response(response, "references")
 endfunction
 
-function! File()
+function s:File()
     let value=py3eval("lsp.textDocument_file()")
     let response = ch_evalraw(s:channel, value)
     call Handle_response(response, "file")
 endfunction
 
-function! Switch_header_source()
+function s:Switch_header_source()
     let value=py3eval("lsp.textDocument_switch_header_source()")
     let response = ch_evalraw(s:channel, value)
     call Handle_response(response, "switch_header_source")
 endfunction
 
-function! Completion()
+function! s:Completion()
     let value=py3eval("lsp.textDocument_completion()")
     call ch_sendraw(s:channel, value, {'callback':"Handle_response_async"})
 endfunction
@@ -128,6 +128,30 @@ endfunction
 " set completefunc=Complete_cpp
 " use CTRL-X CTRL-O to trigger the completion
 set omnifunc=Complete_cpp
+
+if !exists(":Toggle_header_and_source")
+    command -nargs=0 ToggleHeaderAndSource :call s:Switch_header_source()
+endif
+
+if !exists(":Completion")
+    command -nargs=0 Completion :call s:Completion()
+endif
+
+if !exists(":Reconnect")
+    command -nargs=0 Reconnect :call s:Reconnect()
+endif
+
+if !exists(":GotoFile")
+    command -nargs=0 GotoFile :call s:File()
+endif
+
+if !exists(":References")
+    command -nargs=0 References :call s:References()
+endif
+
+if !exists(":Definition")
+    command -nargs=0 Definition :call s:Definition()
+endif
 
 " connect when entering the script
 call s:Connect()
