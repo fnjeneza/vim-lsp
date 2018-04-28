@@ -124,10 +124,14 @@ function! Complete_cpp(findstart, base)
     endif
 endfunction
 
-" use CTRL-X CTRL-U to trigger the completion
-" set completefunc=Complete_cpp
-" use CTRL-X CTRL-O to trigger the completion
-set omnifunc=Complete_cpp
+function s:OnFileRead()
+    if &filetype=="cpp"
+        " use CTRL-X CTRL-U to trigger the completion
+        " set completefunc=Complete_cpp
+        " use CTRL-X CTRL-O to trigger the completion
+        set omnifunc=Complete_cpp
+    endif
+endfunction
 
 if !exists(":Toggle_header_and_source")
     command -nargs=0 ToggleHeaderAndSource :call s:Switch_header_source()
@@ -152,6 +156,8 @@ endif
 if !exists(":Definition")
     command -nargs=0 Definition :call s:Definition()
 endif
+
+au BufNewFile,BufRead * call s:OnFileRead()
 
 " connect when entering the script
 call s:Connect()
