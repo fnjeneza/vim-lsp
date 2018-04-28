@@ -8,8 +8,10 @@ endif
 let g:loaded_langserver=1
 "cpp langserver
 let g:cpp_langserver='localhost:3338'
-let g:completion_items=[]
+let s:completion_items=[]
 let id=1
+" Initialized flag
+let s:initialized=0
 
 
 python3 << EOF
@@ -28,17 +30,18 @@ EOF
 
 function s:Connect()
     " connect to the server
-    let g:channel=ch_open(g:cpp_langserver, {'mode':'raw'})
+    let s:channel=ch_open(g:cpp_langserver, {'mode':'raw'})
 endfunction
 
 " Check that the channel is connected to a server
-function! Connected()
-    return ch_status(g:channel) == "open"
+function! s:Connected()
+    return ch_status(s:channel) == "open"
 endfunction
 
-function! Reconnect()
-    if ch_status(g:channel) != "open"
+function s:Reconnect()
+    if ch_status(s:channel) != "open"
         call s:Connect()
+        call s:Initialize()
     else
         echo "Channel alreay connected to server"
     endif
@@ -52,46 +55,51 @@ function! Handle_response(msg, method)
 endfunction
 
 function! Handle_response_async(channel, msg)
-    let g:completion_items = py3eval("lsp.handle_response('".a:msg."','completion')")
+    let s:completion_items = py3eval("lsp.handle_response('".a:msg."','completion')")
     " simulate key stroke in insert mode
     call feedkeys("i\<C-x>\<C-o>", 'n')
 endfunction
 
-function! Initialize()
+function! s:Initialize()
+    if (!s:Connected())
+        return
+    endif
+
     let arg=py3eval("lsp.initialize()")
     " asynchornous
-    " call ch_sendraw(g:channel, arg, {'callback':"Response_handler"})
-    let response = ch_evalraw(g:channel, arg)
+    " call ch_sendraw(s:channel, arg, {'callback':"Response_handler"})
+    let response = ch_evalraw(s:channel, arg)
     call Handle_response(response, "initialize")
+    let s:initialized=1
 endfunction
 
-function! Definition()
+function s:Definition()
     let value=py3eval("lsp.textDocument_definition()")
-    let response = ch_evalraw(g:channel, value)
+    let response = ch_evalraw(s:channel, value)
     call Handle_response(response, "definition")
 endfunction
 
-function! References()
+function s:References()
     let value=py3eval("lsp.textDocument_references()")
-    let response = ch_evalraw(g:channel, value)
+    let response = ch_evalraw(s:channel, value)
     call Handle_response(response, "references")
 endfunction
 
-function! File()
+function s:File()
     let value=py3eval("lsp.textDocument_file()")
-    let response = ch_evalraw(g:channel, value)
+    let response = ch_evalraw(s:channel, value)
     call Handle_response(response, "file")
 endfunction
 
-function! Switch_header_source()
+function s:Switch_header_source()
     let value=py3eval("lsp.textDocument_switch_header_source()")
-    let response = ch_evalraw(g:channel, value)
+    let response = ch_evalraw(s:channel, value)
     call Handle_response(response, "switch_header_source")
 endfunction
 
-function! Completion()
+function! s:Completion()
     let value=py3eval("lsp.textDocument_completion()")
-    call ch_sendraw(g:channel, value, {'callback':"Handle_response_async"})
+    call ch_sendraw(s:channel, value, {'callback':"Handle_response_async"})
 endfunction
 
 function! Complete_cpp(findstart, base)
@@ -105,7 +113,7 @@ function! Complete_cpp(findstart, base)
         return start
     else
         " call Completion()
-        for item in g:completion_items
+        for item in s:completion_items
             call complete_add(item)
 
             if complete_check()
@@ -116,13 +124,45 @@ function! Complete_cpp(findstart, base)
     endif
 endfunction
 
-" use CTRL-X CTRL-U to trigger the completion
-" set completefunc=Complete_cpp
-" use CTRL-X CTRL-O to trigger the completion
-set omnifunc=Complete_cpp
+function s:OnFileRead()
+    if &filetype=="cpp"
+        " use CTRL-X CTRL-U to trigger the completion
+        " set completefunc=Complete_cpp
+        " use CTRL-X CTRL-O to trigger the completion
+        set omnifunc=Complete_cpp
+    endif
+endfunction
+
+if !exists(":Toggle_header_and_source")
+    command -nargs=0 ToggleHeaderAndSource :call s:Switch_header_source()
+endif
+
+if !exists(":Completion")
+    command -nargs=0 Completion :call s:Completion()
+endif
+
+if !exists(":Reconnect")
+    command -nargs=0 Reconnect :call s:Reconnect()
+endif
+
+if !exists(":GotoFile")
+    command -nargs=0 GotoFile :call s:File()
+endif
+
+if !exists(":References")
+    command -nargs=0 References :call s:References()
+endif
+
+if !exists(":Definition")
+    command -nargs=0 Definition :call s:Definition()
+endif
+
+au BufNewFile,BufRead * call s:OnFileRead()
 
 " connect when entering the script
 call s:Connect()
+" Initialize the client with the server
+call s:Initialize()
 
 
 let &cpo = s:save_cpo
