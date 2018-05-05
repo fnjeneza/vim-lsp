@@ -97,8 +97,9 @@ function s:Switch_header_source()
     call Handle_response(response, "switch_header_source")
 endfunction
 
-function! s:Completion()
+function s:Completion()
     let value=py3eval("lsp.textDocument_completion()")
+    " we use sendraw because the response can take a time
     call ch_sendraw(s:channel, value, {'callback':"Handle_response_async"})
 endfunction
 
