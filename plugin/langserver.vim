@@ -103,6 +103,14 @@ function s:Completion()
     call ch_sendraw(s:channel, value, {'callback':"Handle_response_async"})
 endfunction
 
+function s:DidSave()
+    let value=py3eval("lsp.textDocument_did_save()")
+    let response = ch_evalraw(s:channel, value)
+    echo value
+    " call Handle_response(response, "did_save")
+    " There is nothing to handle on save
+endfunction
+
 function! Complete_cpp(findstart, base)
     if a:findstart
         "locate the start of the word"
@@ -159,6 +167,8 @@ if !exists(":Definition")
 endif
 
 au BufNewFile,BufRead * call s:OnFileRead()
+
+autocmd BufWritePre * call s:DidSave()
 
 " connect when entering the script
 call s:Connect()

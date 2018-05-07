@@ -110,6 +110,15 @@ def textDocument_switch_header_source():
     method = "textDocument/switch_header_source"
     return textDocumentItem(method)
 
+def textDocument_did_save():
+    method = "textDocument/did_save"
+    uri = DocumentUri()
+
+    position = Position()
+    textDocumentIdentifier = {"uri": uri}
+    params = {"textDocument": textDocumentIdentifier, "text": ""}
+    return request(method, params)
+
 def completion_items(completion_items):
     items =[]
     for completion_item in completion_items:
