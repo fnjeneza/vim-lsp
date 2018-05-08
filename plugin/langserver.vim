@@ -104,11 +104,12 @@ function s:Completion()
 endfunction
 
 function s:DidSave()
-    let value=py3eval("lsp.textDocument_did_save()")
-    let response = ch_evalraw(s:channel, value)
-    echo value
-    " call Handle_response(response, "did_save")
-    " There is nothing to handle on save
+    " TODO the check is temporary the plugin shall be launched only for cpp
+    if &filetype=="cpp"
+        let value=py3eval("lsp.textDocument_did_save()")
+        call ch_sendraw(s:channel, value)
+        " There is nothing to handle on save
+    endif
 endfunction
 
 function! Complete_cpp(findstart, base)
@@ -147,7 +148,10 @@ if !exists(":Toggle_header_and_source")
 endif
 
 if !exists(":Completion")
+    " let save_ei = &eventignore
+    " set eventignore=BufWritePre
     command -nargs=0 Completion :call s:Completion()
+    " let &eventignore = save_ei
 endif
 
 if !exists(":Reconnect")
