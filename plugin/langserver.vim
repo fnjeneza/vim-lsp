@@ -20,7 +20,7 @@ import os
 import sys
 # script directory
 current_directory = vim.eval("expand( '<sfile>:p:h' )")
-# additional search path for modules
+#additional search path for modules
 sys.path.append(current_directory)
 
 from lsp import IDE_LSPClient
@@ -103,6 +103,16 @@ function s:Completion()
     call ch_sendraw(s:channel, value, {'callback':"Handle_response_async"})
 endfunction
 
+" Synchronous completion method
+function s:CompletionSync()
+    let value=py3eval("lsp.textDocument_completion()")
+    " send the request
+    let _ = ch_evalraw(s:channel, value)
+    " handle the response
+    let response = ch_read(s:channel)
+    let s:completion_items = py3eval("lsp.handle_response('".response."','completion')")
+endfunction
+
 function s:DidSave()
     " TODO the check is temporary the plugin shall be launched only for cpp
     if &filetype=="cpp"
@@ -122,7 +132,7 @@ function! Complete_cpp(findstart, base)
         endwhile
         return start
     else
-        " call Completion()
+        call s:CompletionSync()
         for item in s:completion_items
             call complete_add(item)
 
