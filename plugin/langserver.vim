@@ -105,12 +105,39 @@ endfunction
 
 " Synchronous completion method
 function s:CompletionSync()
+    " send a command if file did change
+    s:DidChange()
     let value=py3eval("lsp.textDocument_completion()")
     " send the request
     let _ = ch_evalraw(s:channel, value)
     " handle the response
     let response = ch_read(s:channel)
     let s:completion_items = py3eval("lsp.handle_response('".response."','completion')")
+endfunction
+
+function s:DidOpen()
+    if &filetype=="cpp"
+        " do nothing
+        return
+        let value=py3eval("lsp.textDocument_did_open()")
+        call ch_sendraw(s:channel, value)
+    endif
+endfunction
+
+function s:DidClose()
+    if &filetype=="cpp"
+        " do nothing
+        return
+        let value=py3eval("lsp.textDocument_did_close()")
+        call ch_sendraw(s:channel, value)
+    endif
+endfunction
+
+function s:DidChange()
+    if &filetype=="cpp"
+        let value=py3eval("lsp.textDocument_did_change()")
+        call ch_sendraw(s:channel, value)
+    endif
 endfunction
 
 function s:DidSave()
@@ -180,7 +207,10 @@ if !exists(":Definition")
     command -nargs=0 Definition :call s:Definition()
 endif
 
-au BufNewFile,BufRead * call s:OnFileRead()
+autocmd BufNewFile,BufRead * call s:OnFileRead()
+
+autocmd BufEnter * call s:DidOpen()
+autocmd BufLeave * call s:DidClose()
 
 autocmd BufWritePre * call s:DidSave()
 
