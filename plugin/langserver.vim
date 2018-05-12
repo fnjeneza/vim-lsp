@@ -43,7 +43,7 @@ function s:Reconnect()
         call s:Connect()
         call s:Initialize()
     else
-        echo "Channel alreay connected to server"
+        echo "Channel already connected to server"
     endif
 endfunction
 
@@ -54,53 +54,33 @@ function! Handle_response(msg, method)
     " let file_to_open = fzf#run({'source':["file1","file2"]})
 endfunction
 
-function! Handle_response_async(channel, msg)
-    let s:completion_items = py3eval("lsp.handle_response('".a:msg."','completion')")
-    " simulate key stroke in insert mode
-    call feedkeys("i\<C-x>\<C-o>", 'n')
-endfunction
-
-function! s:Initialize()
+function s:TextDocument(method)
     if (!s:Connected())
         return
     endif
+    if &filetype!="cpp"
+        return
+    endif
+    let value=py3eval("lsp.textDocument_".a:method."()")
+    let response = ch_evalraw(s:channel, value)
+    let ret = py3eval("lsp.handle_response('".response."','".a:method."')")
+endfunction
 
-    let arg=py3eval("lsp.initialize()")
-    " asynchornous
-    " call ch_sendraw(s:channel, arg, {'callback':"Response_handler"})
-    let response = ch_evalraw(s:channel, arg)
-    call Handle_response(response, "initialize")
+function s:ATextDocument(method)
+    if (!s:Connected())
+        return
+    endif
+    if &filetype!="cpp"
+        return
+    endif
+    let value=py3eval("lsp.textDocument_".a:method."()")
+    call ch_sendraw(s:channel, value)
+    " call py3eval("lsp.handle_response('".response."','".a:method."')")
+endfunction
+
+function! s:Initialize()
+    call s:TextDocument("initialize")
     let s:initialized=1
-endfunction
-
-function s:Definition()
-    let value=py3eval("lsp.textDocument_definition()")
-    let response = ch_evalraw(s:channel, value)
-    call Handle_response(response, "definition")
-endfunction
-
-function s:References()
-    let value=py3eval("lsp.textDocument_references()")
-    let response = ch_evalraw(s:channel, value)
-    call Handle_response(response, "references")
-endfunction
-
-function s:File()
-    let value=py3eval("lsp.textDocument_file()")
-    let response = ch_evalraw(s:channel, value)
-    call Handle_response(response, "file")
-endfunction
-
-function s:Switch_header_source()
-    let value=py3eval("lsp.textDocument_switch_header_source()")
-    let response = ch_evalraw(s:channel, value)
-    call Handle_response(response, "switch_header_source")
-endfunction
-
-function s:Completion()
-    let value=py3eval("lsp.textDocument_completion()")
-    " we use sendraw because the response can take a time
-    call ch_sendraw(s:channel, value, {'callback':"Handle_response_async"})
 endfunction
 
 " Synchronous completion method
@@ -115,37 +95,14 @@ function s:CompletionSync()
     let s:completion_items = py3eval("lsp.handle_response('".response."','completion')")
 endfunction
 
-function s:DidOpen()
-    if &filetype=="cpp"
-        " do nothing
-        return
-        let value=py3eval("lsp.textDocument_did_open()")
-        call ch_sendraw(s:channel, value)
-    endif
-endfunction
-
-function s:DidClose()
-    if &filetype=="cpp"
-        " do nothing
-        return
-        let value=py3eval("lsp.textDocument_did_close()")
-        call ch_sendraw(s:channel, value)
-    endif
-endfunction
-
 function s:DidChange()
+    " not modified
+    if !&modified
+        return
+    endif
     if &filetype=="cpp"
         let value=py3eval("lsp.textDocument_did_change()")
         call ch_sendraw(s:channel, value)
-    endif
-endfunction
-
-function s:DidSave()
-    " TODO the check is temporary the plugin shall be launched only for cpp
-    if &filetype=="cpp"
-        let value=py3eval("lsp.textDocument_did_save()")
-        call ch_sendraw(s:channel, value)
-        " There is nothing to handle on save
     endif
 endfunction
 
@@ -181,14 +138,7 @@ function s:OnFileRead()
 endfunction
 
 if !exists(":Toggle_header_and_source")
-    command -nargs=0 ToggleHeaderAndSource :call s:Switch_header_source()
-endif
-
-if !exists(":Completion")
-    " let save_ei = &eventignore
-    " set eventignore=BufWritePre
-    command -nargs=0 Completion :call s:Completion()
-    " let &eventignore = save_ei
+    command -nargs=0 ToggleHeaderAndSource :call s:TextDocument("switch_header_source")
 endif
 
 if !exists(":Reconnect")
@@ -196,28 +146,26 @@ if !exists(":Reconnect")
 endif
 
 if !exists(":GotoFile")
-    command -nargs=0 GotoFile :call s:File()
+    command -nargs=0 GotoFile :call s:TextDocument("file")
 endif
 
 if !exists(":References")
-    command -nargs=0 References :call s:References()
+    command -nargs=0 References :call s:TextDocument("references")
 endif
 
 if !exists(":Definition")
-    command -nargs=0 Definition :call s:Definition()
+    command -nargs=0 Definition :call s:TextDocument("definition")
 endif
 
 autocmd BufNewFile,BufRead * call s:OnFileRead()
 
-autocmd BufEnter * call s:DidOpen()
-autocmd BufLeave * call s:DidClose()
-
-autocmd BufWritePre * call s:DidSave()
+autocmd BufEnter * call s:ATextDocument("did_open")
+autocmd BufLeave * call s:ATextDocument("did_close")
+autocmd BufWritePre * call s:ATextDocument("did_save")
 
 " connect when entering the script
 call s:Connect()
 " Initialize the client with the server
 call s:Initialize()
-
 
 let &cpo = s:save_cpo
