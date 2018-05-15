@@ -110,12 +110,24 @@ def textDocument_switch_header_source():
     method = "textDocument/switch_header_source"
     return textDocumentItem(method)
 
+def textDocument_did_open():
+    method = "textDocument/didOpen"
+    return textDocumentItem(method)
+
+def textDocument_did_close():
+    method = "textDocument/didClose"
+    uri = DocumentUri()
+    textDocumentIdentifier = {"uri": uri}
+    params = {"textDocument": textDocumentIdentifier}
+    return request(method, params)
+
 def textDocument_did_change():
     method = "textDocument/didChange"
     uri = DocumentUri()
 
     textDocumentIdentifier = {"uri": uri, "version":1}
-    TextDocumentContentChangeEvent = {"text": "\n".join(vim.current.buffer)}
+    text = " ".join(vim.current.buffer)
+    TextDocumentContentChangeEvent = {"text": R"{}".format(text)}
     params = {"textDocument": textDocumentIdentifier, "contentChanges":
             TextDocumentContentChangeEvent}
     return request(method, params)

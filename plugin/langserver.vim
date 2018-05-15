@@ -54,6 +54,12 @@ function! Handle_response(msg, method)
     " let file_to_open = fzf#run({'source':["file1","file2"]})
 endfunction
 
+function s:LSP(method)
+    let value=py3eval("lsp.".a:method."()")
+    let response = ch_evalraw(s:channel, value)
+    let ret = py3eval("lsp.handle_response('".response."','".a:method."')")
+endfunction
+
 function s:TextDocument(method)
     if (!s:Connected())
         return
@@ -61,9 +67,7 @@ function s:TextDocument(method)
     if &filetype!="cpp"
         return
     endif
-    let value=py3eval("lsp.textDocument_".a:method."()")
-    let response = ch_evalraw(s:channel, value)
-    let ret = py3eval("lsp.handle_response('".response."','".a:method."')")
+    call s:LSP("textDocument".a:method)
 endfunction
 
 function s:ATextDocument(method)
@@ -79,14 +83,14 @@ function s:ATextDocument(method)
 endfunction
 
 function! s:Initialize()
-    call s:TextDocument("initialize")
+    call s:LSP("initialize")
     let s:initialized=1
 endfunction
 
 " Synchronous completion method
 function s:CompletionSync()
     " send a command if file did change
-    s:DidChange()
+    call s:DidChange()
     let value=py3eval("lsp.textDocument_completion()")
     " send the request
     let _ = ch_evalraw(s:channel, value)
