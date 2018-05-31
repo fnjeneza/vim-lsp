@@ -2,6 +2,13 @@ import socket
 import json
 import os
 import vim
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+handler = logging.FileHandler("/tmp/lsp.log")
+handler.setLevel(logging.DEBUG)
+logger.addHandler(handler)
 
 class IDE_LSPClient:
     def __init__(self):
@@ -146,9 +153,11 @@ def completion_items(completion_items):
     for completion_item in completion_items:
         word = completion_item["label"]
         items.append({"word": word})
+    logger.debug(items)
     return items
 
 def handle_response(response, method):
+    logger.debug("handle response {}".format(method))
     if method == "initialize":
         return True
     elif method == "completion":
@@ -156,6 +165,7 @@ def handle_response(response, method):
             message = json.loads(response)
             result = message["result"]
             if len(result) == 0:
+                logger.debug("completion response is empty")
                 return True
             return completion_items(result)
         except json.decoder.JSONDecodeError as e:

@@ -67,7 +67,7 @@ function s:TextDocument(method)
     if &filetype!="cpp"
         return
     endif
-    call s:LSP("textDocument".a:method)
+    call s:LSP("textDocument_".a:method)
 endfunction
 
 function s:ATextDocument(method)
@@ -93,10 +93,10 @@ function s:CompletionSync()
     call s:DidChange()
     let value=py3eval("lsp.textDocument_completion()")
     " send the request
-    let _ = ch_evalraw(s:channel, value)
+    call ch_sendraw(s:channel, value)
     " handle the response
     let response = ch_read(s:channel)
-    let s:completion_items = py3eval("lsp.handle_response('".response."','completion')")
+    return py3eval("lsp.handle_response('".response."','completion')")
 endfunction
 
 function s:DidChange()
@@ -120,8 +120,7 @@ function! Complete_cpp(findstart, base)
         endwhile
         return start
     else
-        call s:CompletionSync()
-        for item in s:completion_items
+        for item in s:CompletionSync()
             call complete_add(item)
 
             if complete_check()
